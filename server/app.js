@@ -1,7 +1,18 @@
 const express = require("express");
 const app = express();
+//Additional security plugin ("not a silver bullet" though)
+const helmet = require("helmet");
+//CORS
+const cors = require("cors");
+// Initialize express-session
+const session = require("express-session");
+// Knex session store
+const KnexSessionStore = require("connect-session-knex")(session);
+// Secret key for session
+const key = require("./config/key");
 
 app.use(express.urlencoded({ extended: false }));
+// parse application/json
 app.use(express.json());
 
 /* Setup the database */
@@ -14,36 +25,37 @@ const knex = Knex(knexFile.development);
 
 // Give the knex instance to objection.
 Model.knex(knex);
+//initializes KnexSessionStore
+const store = new KnexSessionStore({ knex });
 
-const session = require("express-session");
-
+//use CORS
 app.use(
-  session({
-    secret: `this is a secret and shouldn't be shared in version control etc.`,
-    resave: false,
-    saveUninitialized: true,
+  cors({
+    credentials: true,
+    origin: "http://localhost:3000",
   })
 );
 
-// Limit the amount of requests on the auth routes
-const rateLimit = require("express-rate-limit");
+//use helmet
+app.use(helmet());
+// Implements express-session
+app.use(
+  session({
+    secret: key.secret,
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      expires: 600000,
+    },
+    store: store,
+  })
+);
 
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 4, // limit each IP to 4 requests per windowMs
-});
+// API routes
+const apiRoutes = require(__dirname + "/routes/api");
+app.use("/api", apiRoutes);
 
-app.use("/users/login", authLimiter);
-app.use("/users/register", authLimiter);
-
-/* Set up routes with our server instance */
-const usersRoute = require("./routes/users.js");
-
-// only use the custom middleware for the secondpath route
-app.use(usersRoute);
-
-/* Start the server */
-
+/* Start the server, KEEP AT THE BOTTOM  */
 const port = process.env.PORT || 9090;
 
 const server = app.listen(port, (error) => {
