@@ -139,5 +139,23 @@ router.post("/reset-request", async (req, res) => {
 });
 router.post("/recovery", async (req, res) => {
   const { id, token, password } = req.body;
+  if (id && token && password) {
+    const user = await User.query().findById(id).throwIfNotFound();
+    if (token != user.password_recovery_token) {
+      res.status(400).send({ message: "Invalid token" });
+    } else {
+      bcrypt.hash(password, saltRounds, async (error, hashedPassword) => {
+        await user.$query().patch({
+          password: hashedPassword,
+        });
+        res.status(200).send({ message: "Password changed" });
+        if (error) {
+          return res.status(500).send({});
+        }
+      });
+    }
+  } else {
+    res.status(400).send({ message: "Missing info" });
+  }
 });
 module.exports = router;
