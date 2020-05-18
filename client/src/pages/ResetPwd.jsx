@@ -1,13 +1,15 @@
 import React, { useState } from "react";
 import axios from "axios";
-const Users = () => {
+const ResetPassword = () => {
   const [email, setEmail] = useState(null);
   const [response, setResponse] = useState(null);
-  function sendEmail() {
+
+  function sendEmail(e) {
+    e.preventDefault();
     axios({
       method: "post",
-      url: "http://localhost:9090/api/users/recover",
-      withCredentials: true,
+      url: "http://localhost:9090/api/users/reset-request",
+      //withCredentials: true,
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
@@ -15,14 +17,15 @@ const Users = () => {
       data: {
         email,
       },
-    }).then((res) => {
-      if (res.status === 200) {
-        setResponse("Check your email.");
-      } else {
-        setResponse("Error, check your email and try again.");
-        throw res;
-      }
-    });
+    })
+      .then((res) => {
+        if (res.status === 200) {
+          setResponse("Check your email.");
+        }
+      })
+      .catch((err) => {
+        setResponse("Error, check the email and try again");
+      });
   }
   return (
     <>
@@ -33,11 +36,11 @@ const Users = () => {
           placeholder="Your Email"
           onChange={(evt) => setEmail(evt.target.value)}
         />
-        <button onClick={sendEmail}>Submit</button>
+        <button onClick={(e) => sendEmail(e)}>Submit</button>
       </form>
-      {response && <h2>{response}</h2>}
+      <h2>{response}</h2>
     </>
   );
 };
 
-export default Users;
+export default ResetPassword;

@@ -14,8 +14,7 @@ export default function authenticate(setIsAuth) {
         setIsAuth(true);
       }
     })
-    .catch(() => {
-      setIsAuth(false); //change to false after fetch works
-      console.log("Authentication error.");
+    .catch((err) => {
+      setIsAuth(false);
     });
 }

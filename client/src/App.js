@@ -9,7 +9,8 @@ import Users from "./pages/Users";
 import PrivateRoute from "./components/PrivateRoute";
 import authenticate from "./functions/auth";
 import logout from "./functions/logout";
-import ResetPwd from "./pages/ResetPwd";
+import ResetPassword from "./pages/ResetPwd";
+import ChangePwd from "./pages/ChangePwd";
 function App() {
   const [isAuth, setIsAuth] = useState(false);
   useEffect(() => {
@@ -27,7 +28,8 @@ function App() {
         <Switch>
           <Route exact path="/" component={(props) => <Home />}></Route>
           <Route path="/signup" component={(props) => <Signup />}></Route>
-          <Route path="/reset" component={(props) => <ResetPwd />}></Route>
+          <Route path="/reset" component={(props) => <ResetPassword />}></Route>
+          <Route path="/recovery" component={(props) => <ChangePwd />}></Route>
           <Route
             path="/login"
             component={(...props) => (

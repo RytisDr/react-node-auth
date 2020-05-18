@@ -3,6 +3,7 @@ exports.up = function (knex) {
     table.increments("id");
     table.string("email").notNullable();
     table.string("password").notNullable();
+    table.string("password_recovery_token");
   });
 };
 

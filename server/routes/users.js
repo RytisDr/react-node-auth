@@ -2,9 +2,11 @@ const router = require("express").Router();
 const { authenticate } = require(__dirname + "/../helpers/auth.js");
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
-
+const crypto = require("crypto");
+var payload = { foo: "bar" }; //to change and put in config
+var secret = "This is a secret for the pwd reset token."; //to change
 const User = require("../models/User");
-
+const sendMail = require(__dirname + "/../helpers/mail.js");
 //#############################################
 /*
 GET /users
@@ -26,14 +28,12 @@ PATCH /users/[userId] -- change only some parts of the user
 }); */
 router.get("/auth-check", async (req, res, next) => {
   try {
-    if (req.session.user) {
-      if (!req.session.user.id) {
-        throw res.send(403, "Unauthenticated");
-      }
-      res.status(200).json({ message: "Authenticated" });
+    if (!req.session.user) {
+      throw res.status(403).send({ message: "Unauthenticated" });
     }
+    res.status(200).json({ message: "Authenticated" });
   } catch (err) {
-    next(err);
+    next();
   }
 });
 router.get("/logout", async (req, res, next) => {
@@ -115,5 +115,29 @@ router.post("/register", (req, res) => {
     return res.status(404).send({ response: "Missing fields" });
   }
 });
-
+//#############################################
+//RESET PWD
+router.post("/reset-request", async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await User.query().findOne({ email }).throwIfNotFound();
+    const recoveryToken = crypto.randomBytes(48).toString("hex");
+    await user.$query().patch({
+      password_recovery_token: recoveryToken,
+    });
+    mailBody = `<p>You have requested to reset your password, click <a href="http://localhost:3000/recovery?token=${recoveryToken}&id=${user.id}">here</a></p>`;
+    const sentEmail = await sendMail(user.email, "Password reset", mailBody);
+    if (!!sentEmail) {
+      throw res.status(500).send({
+        response: "Email not sent",
+      });
+    }
+    res.status(200).send({ message: "email succesfully sent" });
+  } catch (err) {
+    res.status(err.statusCode).send({ message: "User not found" });
+  }
+});
+router.post("/recovery", async (req, res) => {
+  const { id, token, password } = req.body;
+});
 module.exports = router;
