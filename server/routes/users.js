@@ -27,10 +27,12 @@ PATCH /users/[userId] -- change only some parts of the user
   res.json(user);
 }); */
 router.get("/auth-check", async (req, res, next) => {
+  console.log(req.session.user);
   try {
     if (!req.session.user) {
       throw res.status(403).send({ message: "Unauthenticated" });
     }
+
     res.status(200).json({ message: "Authenticated" });
   } catch (err) {
     next();
@@ -40,7 +42,10 @@ router.get("/logout", async (req, res, next) => {
   try {
     req.session.destroy((err) => {
       if (err) throw res.status(500).send({ response: "Unable to log-out." });
-      res.status(200).send({ response: "Logged-out" });
+      res
+        .status(200)
+        .clearCookie("connect.sid")
+        .send({ response: "Logged-out" });
     });
   } catch (err) {
     next(err);
