@@ -32,7 +32,6 @@ router.get("/auth-check", async (req, res, next) => {
     if (!req.session.user) {
       throw res.status(403).send({ message: "Unauthenticated" });
     }
-
     res.status(200).json({ message: "Authenticated" });
   } catch (err) {
     next();
